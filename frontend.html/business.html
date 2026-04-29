@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business — ISJIEE</title>
+
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .navbar a {
+      margin-left: 15px;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .card {
+      width: 260px;
+      padding: 20px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(8px);
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    .btn {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, cyan, purple);
+      color: #fff;
+      box-shadow: 0 0 10px cyan;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<header class="navbar">
+  <div>ISJIEE</div>
+  <nav>
+    <a onclick="go('/dashboard-student.html')">Dashboard</a>
+    <a onclick="go('/magazstars.html')">MagazStars</a>
+    <a onclick="go('/wiggfluenceur.html')">Wiggfluenceur</a>
+    <a id="logoutBtn">Logout</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Business</h1>
+  <p>Générez des revenus avec vos actions</p>
+</section>
+
+<!-- BALANCE -->
+<section class="section">
+  <div class="cards">
+    <div class="card">
+      <h3>Solde</h3>
+      <p id="balance">0 USD</p>
+    </div>
+  </div>
+</section>
+
+<!-- ACTIONS -->
+<section class="section">
+  <div class="cards">
+
+    <div class="card">
+      <h3>Partager</h3>
+      <p>Invitez et gagnez</p>
+      <button class="btn" onclick="earn('referral', 5)">+5 USD</button>
+    </div>
+
+    <div class="card">
+      <h3>Contenu</h3>
+      <p>Publiez et gagnez</p>
+      <button class="btn" onclick="earn('content', 3)">+3 USD</button>
+    </div>
+
+    <div class="card">
+      <h3>Premium</h3>
+      <p>Activité avancée</p>
+      <button class="btn" onclick="earn('premium', 10)">+10 USD</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- TRANSACTIONS -->
+<section class="section">
+  <h2 style="text-align:center;">Historique</h2>
+
+  <div id="txContainer">
+    <p>Chargement...</p>
+  </div>
+</section>
+
+<script type="module">
+
+import auth from "/js/authSystem.js";
+import services from "/js/services.js";
+import ui from "/js/uiSystem.js";
+
+// =========================
+// NAV
+// =========================
+window.go = (url) => ui.redirect(url);
+
+// =========================
+// AUTH
+// =========================
+auth.requireAuth();
+
+// =========================
+// LOAD DATA
+// =========================
+async function loadBusiness() {
+
+  try {
+
+    const balance = await services.getBalance();
+    ui.setText("balance", balance.amount + " USD");
+
+    const txs = await services.getTransactions();
+
+    ui.renderCards("txContainer", txs, (t) => `
+      <p><strong>${t.source}</strong></p>
+      <p>${t.amount} USD</p>
+    `);
+
+  } catch (err) {
+    ui.showError("Erreur chargement business");
+  }
+
+}
+
+loadBusiness();
+
+// =========================
+// EARN
+// =========================
+window.earn = async (source, amount) => {
+
+  try {
+
+    await services.addTransaction(amount, source);
+
+    ui.showSuccess("Gain ajouté");
+    loadBusiness();
+
+  } catch (err) {
+    ui.showError("Erreur transaction");
+  }
+
+};
+
+// =========================
+// LOGOUT
+// =========================
+ui.bindLogout("logoutBtn", auth.logout);
+
+</script>
+
+</body>
+</html>
