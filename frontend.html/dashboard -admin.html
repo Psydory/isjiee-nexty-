@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin — ISJIEE</title>
+
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="logo text-glow">ISJIEE ADMIN</div>
+
+  <nav>
+    <a href="/dashboard-student.html">Vue étudiant</a>
+    <a href="/business.html">Business</a>
+    <a href="/gallery.html">Galerie</a>
+    <a href="#" id="logoutBtn">Logout</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1 class="text-glow">Dashboard Administrateur</h1>
+  <p>Gestion globale du système</p>
+</section>
+
+<!-- USERS -->
+<section class="dashboard-section">
+  <h2>👥 Utilisateurs</h2>
+  <div id="usersContainer">
+    <p>Chargement...</p>
+  </div>
+</section>
+
+<!-- TASKS -->
+<section class="dashboard-section">
+  <h2>📝 Tâches</h2>
+  <div id="tasksContainer">
+    <p>Chargement...</p>
+  </div>
+</section>
+
+<!-- TRANSACTIONS -->
+<section class="dashboard-section">
+  <h2>💰 Transactions</h2>
+  <div id="transactionsContainer">
+    <p>Chargement...</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <a href="/privacy.html">Confidentialité</a>
+  <a href="/terms.html">Conditions</a>
+</footer>
+
+<!-- SCRIPT -->
+<script type="module">
+
+import auth from "/js/authSystem.js";
+import services from "/js/services.js";
+import ui from "/js/uiSystem.js";
+
+// =========================
+// AUTH CHECK
+// =========================
+auth.requireAuth();
+
+// =========================
+// LOAD ADMIN DATA
+// =========================
+async function loadAdmin() {
+
+  try {
+
+    // USERS
+    const users = await services.getProfile(); // ⚠️ adapter si endpoint admin/users existe
+    ui.renderCards("usersContainer", [users], (u) => `
+      <p><strong>${u.email}</strong></p>
+    `);
+
+    // TASKS
+    const tasks = await services.getTasks();
+    ui.renderCards("tasksContainer", tasks, (t) => `
+      <p><strong>${t.type}</strong></p>
+      <p>${t.description}</p>
+      <p>Status: ${t.status}</p>
+    `);
+
+    // TRANSACTIONS
+    const txs = await services.getTransactions();
+    ui.renderCards("transactionsContainer", txs, (tx) => `
+      <p><strong>${tx.type}</strong></p>
+      <p>${tx.amount} USD</p>
+    `);
+
+  } catch (err) {
+    ui.showError("Erreur chargement admin");
+  }
+
+}
+
+loadAdmin();
+
+// =========================
+// LOGOUT
+// =========================
+ui.bindLogout("logoutBtn", auth.logout);
+
+</script>
+
+</body>
+</html>
