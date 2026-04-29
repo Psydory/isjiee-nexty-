@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Politique de Confidentialité — ISJIEE</title>
+
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #0b0b0b;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    h1, h2 {
+      color: cyan;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .consent-box {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, cyan, purple);
+      color: #fff;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Politique de Confidentialité</h1>
+
+<p>Dernière mise à jour : 2026</p>
+
+<h2>1. Introduction</h2>
+<p>
+La plateforme ISJIEE respecte la vie privée de ses utilisateurs et s'engage à protéger leurs données personnelles conformément aux lois internationales, notamment le RGPD (UE), CCPA (Californie) et autres réglementations applicables.
+</p>
+
+<h2>2. Données collectées</h2>
+<ul>
+  <li>Informations d’identification (email, compte)</li>
+  <li>Données d’utilisation (activité, progression, interactions)</li>
+  <li>Données techniques (IP, navigateur, appareil)</li>
+</ul>
+
+<h2>3. Utilisation des données</h2>
+<p>
+Les données sont utilisées pour :
+</p>
+<ul>
+  <li>Fournir et améliorer les services</li>
+  <li>Personnaliser l’expérience utilisateur</li>
+  <li>Assurer la sécurité</li>
+  <li>Analyser l’utilisation de la plateforme</li>
+</ul>
+
+<h2>4. Google AdSense et publicité</h2>
+<p>
+Nous utilisons Google AdSense pour afficher des publicités. Google peut utiliser des cookies pour diffuser des annonces pertinentes.
+</p>
+
+<p>
+Google utilise notamment le cookie DoubleClick pour afficher des annonces personnalisées.
+</p>
+
+<p>
+Les utilisateurs peuvent désactiver la publicité personnalisée via :
+https://www.google.com/settings/ads
+</p>
+
+<h2>5. Cookies</h2>
+<p>
+Nous utilisons des cookies pour :
+</p>
+<ul>
+  <li>Authentification</li>
+  <li>Analyse</li>
+  <li>Publicité</li>
+</ul>
+
+<h2>6. Consentement</h2>
+<p>
+En utilisant la plateforme, vous acceptez l’utilisation de vos données conformément à cette politique.
+</p>
+
+<h2>7. Droits des utilisateurs</h2>
+<ul>
+  <li>Accès à vos données</li>
+  <li>Rectification</li>
+  <li>Suppression</li>
+  <li>Opposition au traitement</li>
+</ul>
+
+<h2>8. Sécurité</h2>
+<p>
+Nous mettons en œuvre des mesures de sécurité techniques pour protéger vos données.
+</p>
+
+<h2>9. Partage des données</h2>
+<p>
+Nous ne vendons pas vos données. Certaines données peuvent être partagées avec des partenaires techniques (hébergement, analytics).
+</p>
+
+<h2>10. Modifications</h2>
+<p>
+Cette politique peut être mise à jour à tout moment.
+</p>
+
+<h2>11. Contact</h2>
+<p>
+Pour toute question : contact@isjiee.com
+</p>
+
+<!-- CONSENTEMENT -->
+<div class="consent-box">
+  <p>Acceptez-vous l’utilisation des cookies et des données ?</p>
+
+  <button onclick="acceptConsent()">Accepter</button>
+  <button onclick="رفض()">Refuser</button>
+</div>
+
+</div>
+
+<script>
+
+function acceptConsent() {
+  localStorage.setItem("consent", "yes");
+  alert("Consentement accepté");
+}
+
+function رفض() {
+  localStorage.setItem("consent", "no");
+  alert("Consentement refusé");
+}
+
+</script>
+
+</body>
+</html>
