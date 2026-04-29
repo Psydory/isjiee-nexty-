@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISJIEE — Smart Entry</title>
+
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: cyan;
+      text-shadow: 0 0 20px cyan;
+    }
+
+    .menu {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 15px 25px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, cyan, purple);
+      color: #fff;
+      box-shadow: 0 0 10px cyan;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px cyan;
+    }
+
+    .loading {
+      margin-top: 20px;
+      opacity: 0.7;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h1>Bienvenue sur ISJIEE</h1>
+<p>Chargement intelligent...</p>
+
+<div class="loading" id="loading">Vérification en cours...</div>
+
+<div class="menu" id="menu" style="display:none;">
+
+  <button class="btn" onclick="go('/magazstars.html')">MagazStars</button>
+  <button class="btn" onclick="go('/dashboard-student.html')">Dashboard</button>
+  <button class="btn" onclick="go('/business.html')">Business</button>
+  <button class="btn" onclick="go('/wiggfluenceur.html')">Wiggfluenceur</button>
+
+</div>
+
+<script type="module">
+
+import auth from "/js/authSystem.js";
+import services from "/js/services.js";
+import ui from "/js/uiSystem.js";
+
+// =========================
+// NAV
+// =========================
+window.go = (url) => ui.redirect(url);
+
+// =========================
+// INIT
+// =========================
+async function init() {
+
+  try {
+
+    // Si pas connecté → login
+    if (!auth.isAuthenticated()) {
+      ui.redirect("/login.html");
+      return;
+    }
+
+    // Récupérer utilisateur
+    const user = await auth.getCurrentUser();
+
+    // Redirection intelligente selon rôle
+    if (user.role === "admin") {
+      ui.redirect("/dashboard-admin.html");
+      return;
+    }
+
+    // Sinon afficher menu utilisateur
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("menu").style.display = "flex";
+
+  } catch (err) {
+
+    // Token invalide ou erreur → logout
+    auth.logout();
+
+  }
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
