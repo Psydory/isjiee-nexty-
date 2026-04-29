@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MagazStars HUB</title>
+
+<link rel="stylesheet" href="/css/main.css">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #000;
+  color: white;
+}
+
+/* NAV */
+nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: #050510;
+}
+
+nav a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+  background: radial-gradient(circle,#0a0a2a,#000);
+}
+
+.hero h1 {
+  font-size: 3rem;
+  background: linear-gradient(90deg,#00f0ff,#8a2be2,#ff00cc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg,#00f0ff,#8a2be2);
+}
+
+/* MEDIA */
+.media-section {
+  padding: 30px;
+}
+
+.media-slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+}
+
+.card {
+  min-width: 200px;
+  background: #111;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00f0ff;
+}
+
+.card img,
+.card video {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.card p {
+  padding: 10px;
+  font-size: 14px;
+}
+
+/* CTA */
+.cta {
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(90deg,#8a2be2,#ff00cc);
+}
+
+.cta button {
+  padding: 12px 25px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #050510;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <div>MagazStars</div>
+  <div>
+    <a href="/">Accueil</a>
+    <a href="/gallery.html">Gallery</a>
+    <a href="/dashboard.html">Dashboard</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>MagazStars HUB</h1>
+  <p>Expose tes talents, projets et médias</p>
+  <button onclick="goGallery()">Explorer</button>
+</section>
+
+<!-- MEDIA -->
+<section class="media-section">
+  <h2>Médias récents</h2>
+  <div id="slider" class="media-slider"></div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>Boost ta visibilité</h2>
+  <button onclick="goDashboard()">Publier maintenant</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  © MagazStars
+</footer>
+
+<script type="module">
+
+import api from "/js/api-core.js";
+
+// =========================
+// LOAD MEDIA
+// =========================
+async function loadMedia() {
+
+  const box = document.getElementById("slider");
+
+  try {
+    const res = await api.get("/media");
+
+    if (!res || !res.media) {
+      box.innerHTML = "<p>Aucun média</p>";
+      return;
+    }
+
+    box.innerHTML = res.media.slice(0,10).map(m => `
+      <div class="card" data-id="${m.id}">
+        ${
+          m.type === "image"
+          ? `<img src="${m.url}">`
+          : `<video src="${m.url}" muted></video>`
+        }
+        <p>${m.title || ""}</p>
+      </div>
+    `).join("");
+
+    bindClick();
+
+  } catch {
+    box.innerHTML = "<p>Erreur</p>";
+  }
+}
+
+// =========================
+// CLICK → GALLERY
+// =========================
+function bindClick() {
+  document.querySelectorAll(".card").forEach(c => {
+    c.onclick = () => {
+      localStorage.setItem("focusMedia", c.dataset.id);
+      window.location.href = "/gallery.html";
+    };
+  });
+}
+
+// =========================
+// NAV
+// =========================
+window.goGallery = () => {
+  window.location.href = "/gallery.html";
+};
+
+window.goDashboard = () => {
+  window.location.href = "/dashboard.html";
+};
+
+// =========================
+// INIT
+// =========================
+loadMedia();
+
+</script>
+
+<script type="module" src="/js/app.js"></script>
+
+</body>
+</html>
