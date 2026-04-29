@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programme Étudiant — ISJIEE</title>
+
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #141e30, #243b55);
+      color: #fff;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .navbar a {
+      margin-left: 15px;
+      cursor: pointer;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .tasks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .task-card {
+      padding: 20px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    textarea {
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: none;
+      padding: 10px;
+    }
+
+    .btn {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 15px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, cyan, purple);
+      color: #fff;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<header class="navbar">
+  <div>ISJIEE Program</div>
+  <nav>
+    <a onclick="go('/dashboard-student.html')">Dashboard</a>
+    <a onclick="go('/magazstars.html')">MagazStars</a>
+    <a onclick="go('/business.html')">Business</a>
+    <a id="logoutBtn">Logout</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Programme Étudiant</h1>
+  <p>Complétez vos tâches et progressez</p>
+</section>
+
+<!-- TASKS -->
+<section class="section">
+  <div class="tasks" id="tasksContainer">
+    <p>Chargement...</p>
+  </div>
+</section>
+
+<script type="module">
+
+import auth from "/js/authSystem.js";
+import services from "/js/services.js";
+import ui from "/js/uiSystem.js";
+
+// =========================
+// NAV
+// =========================
+window.go = (url) => ui.redirect(url);
+
+// =========================
+// AUTH
+// =========================
+auth.requireAuth();
+
+// =========================
+// LOAD TASKS
+// =========================
+async function loadTasks() {
+
+  try {
+
+    const tasks = await services.getTasks();
+
+    const container = document.getElementById("tasksContainer");
+    container.innerHTML = "";
+
+    tasks.forEach(task => {
+
+      const div = document.createElement("div");
+      div.className = "task-card";
+
+      div.innerHTML = `
+        <h3>${task.type}</h3>
+        <p>${task.description}</p>
+        <p>Status: ${task.status}</p>
+
+        <textarea id="input-${task.id}" placeholder="Votre réponse"></textarea>
+
+        <button class="btn" onclick="submit('${task.type}', '${task.id}')">
+          Soumettre
+        </button>
+      `;
+
+      container.appendChild(div);
+    });
+
+  } catch {
+    ui.showError("Erreur chargement tâches");
+  }
+
+}
+
+loadTasks();
+
+// =========================
+// SUBMIT TASK
+// =========================
+window.submit = async (type, id) => {
+
+  const value = document.getElementById("input-" + id).value;
+
+  if (!value) {
+    ui.showError("Champ vide");
+    return;
+  }
+
+  try {
+
+    await services.submitTask(type, value, { taskId: id });
+
+    ui.showSuccess("Soumission envoyée");
+
+    loadTasks();
+
+  } catch {
+    ui.showError("Erreur soumission");
+  }
+
+};
+
+// =========================
+// LOGOUT
+// =========================
+ui.bindLogout("logoutBtn", auth.logout);
+
+</script>
+
+</body>
+</html>
