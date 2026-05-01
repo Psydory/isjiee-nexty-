@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="/main.css">
+</head>
+<body>
+
+<nav>
+  <a href="/index.html">Home</a>
+  <a href="/gallery.html">Gallery</a>
+  <button id="logout">Logout</button>
+</nav>
+
+<section class="hero">
+  <h1>Admin Panel</h1>
+  <p>Contrôle total de la plateforme</p>
+</section>
+
+<!-- STATS -->
+<section id="stats" style="text-align:center; margin:20px;"></section>
+
+<!-- MEDIA -->
+<h2 style="text-align:center;">Media Moderation</h2>
+<section id="media" class="media-slider"></section>
+
+<!-- USERS -->
+<h2 style="text-align:center;">Users</h2>
+<section id="users" class="media-slider"></section>
+
+<script type="module">
+
+// 🔒 PROTECTION
+import guard from "/js/guard.js";
+import auth from "/js/authSystem.js";
+
+// CORE
+import API from "/js/api-core.js";
+import UI from "/js/uisystem.js";
+
+// =========================
+// INIT GUARD (ADMIN ONLY)
+// =========================
+guard.initGuard({ role: "admin" });
+
+// =========================
+// DOM
+// =========================
+const mediaContainer = document.getElementById("media");
+const usersContainer = document.getElementById("users");
+const statsContainer = document.getElementById("stats");
+const logoutBtn = document.getElementById("logout");
+
+// =========================
+// LOGOUT
+// =========================
+logoutBtn.onclick = () => {
+  auth.logout();
+};
+
+// =========================
+// LOAD STATS
+// =========================
+async function loadStats() {
+  try {
+    const data = await API.get("/admin/stats");
+
+    statsContainer.innerHTML = `
+      <p>📦 Media: ${data.media}</p>
+      <p>👤 Users: ${data.users}</p>
+    `;
+  } catch {
+    UI.toast("Erreur stats", "error");
+  }
+}
+
+// =========================
+// LOAD MEDIA
+// =========================
+async function loadMedia() {
+
+  UI.loading(mediaContainer);
+
+  try {
+    const data = await API.get("/admin/media");
+    renderMedia(data.media);
+
+  } catch {
+    UI.error(mediaContainer, "Accès refusé");
+  }
+}
+
+function renderMedia(list) {
+
+  mediaContainer.innerHTML = "";
+
+  list.forEach(m => {
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      ${m.type === "video"
+        ? `<video src="${m.url}" controls></video>`
+        : `<img src="${m.url}" />`
+      }
+
+      <p><strong>${m.title || "Sans titre"}</strong></p>
+      <p>Status: ${m.status}</p>
+      <p>Visibility: ${m.visibility}</p>
+
+      <button class="approve">Approve</button>
+      <button class="reject">Reject</button>
+      <button class="feature">Feature</button>
+      <button class="delete">Delete</button>
+    `;
+
+    // APPROVE
+    card.querySelector(".approve").onclick = async () => {
+      await API.post("/admin/media/moderate", {
+        id: m.id,
+        status: "approved"
+      });
+      UI.toast("Approuvé");
+      loadMedia();
+    };
+
+    // REJECT
+    card.querySelector(".reject").onclick = async () => {
+      await API.post("/admin/media/moderate", {
+        id: m.id,
+        status: "rejected"
+      });
+      UI.toast("Rejeté");
+      loadMedia();
+    };
+
+    // FEATURE
+    card.querySelector(".feature").onclick = async () => {
+      await API.post("/admin/media/feature", {
+        id: m.id,
+        featured: m.featured ? 0 : 1
+      });
+      UI.toast("Mis en avant");
+      loadMedia();
+    };
+
+    // DELETE (corrigé backend)
+    card.querySelector(".delete").onclick = async () => {
+
+      const ok = await UI.confirm("Supprimer ce media ?");
+      if (!ok) return;
+
+      await API.post("/media/delete", { id: m.id });
+
+      UI.toast("Supprimé");
+      loadMedia();
+    };
+
+    mediaContainer.appendChild(card);
+  });
+}
+
+// =========================
+// LOAD USERS
+// =========================
+async function loadUsers() {
+
+  UI.loading(usersContainer);
+
+  try {
+    const data = await API.get("/admin/users");
+    renderUsers(data.users);
+
+  } catch {
+    UI.error(usersContainer, "Erreur utilisateurs");
+  }
+}
+
+function renderUsers(list) {
+
+  usersContainer.innerHTML = "";
+
+  list.forEach(u => {
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <p>ID: ${u.id}</p>
+      <p>Role: ${u.role}</p>
+      <p>Banned: ${u.banned ? "Oui" : "Non"}</p>
+
+      <button class="ban">${u.banned ? "Unban" : "Ban"}</button>
+    `;
+
+    card.querySelector(".ban").onclick = async () => {
+
+      await API.post("/admin/users/ban", {
+        id: u.id,
+        banned: u.banned ? 0 : 1
+      });
+
+      UI.toast("Utilisateur mis à jour");
+      loadUsers();
+    };
+
+    usersContainer.appendChild(card);
+  });
+}
+
+// =========================
+// INIT
+// =========================
+loadStats();
+loadMedia();
+loadUsers();
+
+</script>
+
+</body>
+</html>
