@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — MagazStars</title>
+
+  <link rel="stylesheet" href="/main.css" />
+
+  <style>
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--color-primary);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      margin-bottom: 30px;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card img,
+    .card video {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>Mon Dashboard</h1>
+    <button id="logout" class="btn">Déconnexion</button>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <p>Cliquer ou glisser un fichier</p>
+    <input type="file" id="fileInput" hidden />
+    <button class="btn" id="uploadBtn">Choisir un fichier</button>
+  </div>
+
+  <div id="mediaContainer" class="grid"></div>
+
+</div>
+
+<script type="module">
+
+import guard from "/js/guard.js";          // 🔒 sécurité
+import auth from "/js/authSystem.js";     // 🔐 session
+import "/js/app.js";
+import API from "/js/api-core.js";
+import URLS from "/js/url.js";
+import UI from "/js/uisystem.js";
+import Upload from "/js/upload.js";
+
+// =========================
+// INIT GUARD
+// =========================
+guard.initGuard();
+
+// =========================
+// DOM
+// =========================
+const container = document.getElementById("mediaContainer");
+const input = document.getElementById("fileInput");
+const btn = document.getElementById("uploadBtn");
+const logoutBtn = document.getElementById("logout");
+
+// =========================
+// LOGOUT
+// =========================
+logoutBtn.onclick = () => {
+  auth.logout();
+};
+
+// =========================
+// LOAD MEDIA
+// =========================
+async function loadMedia() {
+
+  UI.skeleton(container, 6);
+
+  try {
+
+    const endpoint = URLS.build(
+      URLS.query(URLS.api.media.base, { mine: 1 })
+    );
+
+    const res = await API.get(endpoint);
+
+    const list = res.data || [];
+
+    if (!list.length) {
+      UI.empty(container, "Aucun média");
+      return;
+    }
+
+    container.innerHTML = "";
+
+    list.forEach(m => {
+
+      const el = document.createElement("div");
+      el.className = "card";
+
+      el.innerHTML = `
+        ${m.type === "video"
+          ? `<video src="${m.url}" controls></video>`
+          : `<img src="${m.url}" loading="lazy" />`
+        }
+        <p>${m.title || "Sans titre"}</p>
+        <div class="actions">
+          <button class="btn delete">Supprimer</button>
+        </div>
+      `;
+
+      el.querySelector(".delete").onclick = async () => {
+
+        const ok = await UI.confirm("Supprimer ce média ?");
+        if (!ok) return;
+
+        await UI.api(() =>
+          API.request(
+            "POST", // ✅ corrigé (backend)
+            URLS.build("/media/delete"),
+            { id: m.id }
+          )
+        );
+
+        loadMedia();
+      };
+
+      container.appendChild(el);
+    });
+
+  } catch {
+    UI.error(container, "Erreur chargement");
+  }
+}
+
+// =========================
+// UPLOAD
+// =========================
+Upload.bindInput("#fileInput");
+
+Upload.onSuccess = () => {
+  loadMedia();
+};
+
+// =========================
+// UI ACTIONS
+// =========================
+btn.onclick = () => input.click();
+
+// =========================
+// INIT
+// =========================
+loadMedia();
+
+</script>
+
+</body>
+</html>
