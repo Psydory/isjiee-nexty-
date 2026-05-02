@@ -1,0 +1,152 @@
+<!-- =========================
+MAGAZSTARS (CLEAN BLOCK)
+========================= -->
+<section class="magazstars-hub premium">
+
+  <h2 class="section-title">✨ MagazStars — Trending</h2>
+
+  <div 
+    class="media-slider premium-slider" 
+    id="mediaSlider"
+    aria-live="polite"
+  ></div>
+
+  <div class="media-actions">
+    <button 
+      class="btn primary glow" 
+      id="viewAll"
+      type="button"
+    >
+      Explorer tout
+    </button>
+  </div>
+
+</section>
+
+<script type="module">
+
+import API from "/js/api-core.js";
+
+const slider = document.getElementById("mediaSlider");
+const viewAllBtn = document.getElementById("viewAll");
+
+// =========================
+// LOAD TRENDING (SEED COMPATIBLE)
+// =========================
+async function loadTrending() {
+
+  if (!slider) return;
+
+  try {
+
+    const res = await API.get("/media/trending");
+    const list = res?.media || [];
+
+    if (!list.length) {
+      slider.innerHTML = `<p class="ui-empty">Aucun contenu</p>`;
+      return;
+    }
+
+    slider.innerHTML = list.map(m => {
+
+      const title = (m.title || "Sans titre")
+        .replace(/</g, "&lt;");
+
+      return `
+        <div class="media-card premium-card" data-id="${m.id}">
+
+          ${
+            m.type === "video"
+            ? `<video src="${m.url}" muted loop preload="metadata"></video>`
+            : `<img src="${m.url}" loading="lazy" alt="${title}">`
+          }
+
+          <div class="media-info">
+            <p>${title}</p>
+          </div>
+
+        </div>
+      `;
+    }).join("");
+
+    bindInteractions();
+
+  } catch (err) {
+
+    console.error("MagazStars error:", err);
+
+    slider.innerHTML = `
+      <p class="ui-error">Erreur chargement</p>
+    `;
+  }
+}
+
+// =========================
+// INTERACTIONS PREMIUM
+// =========================
+function bindInteractions() {
+
+  const cards = document.querySelectorAll(".premium-card");
+
+  cards.forEach(card => {
+
+    const video = card.querySelector("video");
+
+    // hover dynamique
+    card.addEventListener("mouseenter", () => {
+      if (video) video.play();
+    });
+
+    card.addEventListener("mouseleave", () => {
+      if (video) video.pause();
+    });
+
+    // navigation vers gallery
+    card.addEventListener("click", () => {
+      localStorage.setItem("focusMedia", card.dataset.id);
+      window.location.href = "/gallery.html";
+    });
+
+  });
+
+}
+
+// =========================
+// AUTO SLIDE NON MONOTONE
+// =========================
+function autoSlide() {
+
+  if (!slider) return;
+
+  let speed = 1;
+
+  setInterval(() => {
+
+    slider.scrollLeft += speed;
+
+    // variation pour effet vivant
+    if (Math.random() > 0.98) {
+      speed = Math.random() * 2 + 0.5;
+    }
+
+    if (slider.scrollLeft >= slider.scrollWidth - slider.clientWidth) {
+      slider.scrollLeft = 0;
+    }
+
+  }, 30);
+}
+
+// =========================
+// BUTTON NAVIGATION
+// =========================
+viewAllBtn?.addEventListener("click", () => {
+  window.location.href = "/gallery.html";
+});
+
+// =========================
+// INIT
+// =========================
+loadTrending();
+autoSlide();
+
+</script>
