@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gallery — MagazStars</title>
+
+  <!-- CSS GLOBAL -->
+  <link rel="stylesheet" href="/main.css" />
+</head>
+
+<body>
+
+<!-- =========================
+NAVIGATION SIMPLE
+========================= -->
+<nav class="nav">
+  <a href="/index.html">Accueil</a>
+  <a href="/gallery.html">Gallery</a>
+  <a href="/dashboard.html">Dashboard</a>
+</nav>
+
+<!-- =========================
+CONTAINER
+========================= -->
+<main class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <h1>Explorer</h1>
+    <p>Découvrez les contenus MagazStars</p>
+  </header>
+
+  <!-- GRID GALLERY -->
+  <section id="gallery" class="grid">
+    <!-- contenu injecté par gallery.js -->
+  </section>
+
+</main>
+
+<!-- =========================
+SCRIPTS (IMPORTANT ORDRE)
+========================= -->
+
+<!-- CORE APP (auth, events globaux, etc.) -->
+<script type="module" src="/js/app.js"></script>
+
+<!-- GALLERY LOGIC -->
+<script type="module" src="/js/gallery.js"></script>
+
+</body>
+</html>
