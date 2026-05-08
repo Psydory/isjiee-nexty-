@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "isjiee-next-api",
+"main": "router.js",
   "compatibility_date": "2026-05-07",
   "observability": {
     "enabled": true
