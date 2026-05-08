@@ -1,15 +1,5 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "isjiee-next-api",
-"main": "router.js",
   "compatibility_date": "2026-05-07",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "frontend"
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./frontend"
 }
