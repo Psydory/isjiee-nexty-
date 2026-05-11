@@ -1,9 +1,6 @@
 {
+  "name": "isjiee-nexty-app",
   "compatibility_date": "2026-05-07",
-
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-
-  "pages_build_output_dir": "./frontend"
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "frontend"
 }
