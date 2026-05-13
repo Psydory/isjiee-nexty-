@@ -2,5 +2,27 @@
   "name": "isjiee-nexty-app",
   "compatibility_date": "2026-05-07",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "frontend"
+  "pages_build_output_dir": "frontend",
+
+  "vars": {
+    "JWT_SECRET": "une_clé_très_longue_et_secrète_d_au_moins_32_caractères",
+    "SEED_KEY": "ta_clé_seed_pour_le_peuplement",
+    "ENVIRONMENT": "production"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "isjiee-nexty-db",
+      "database_id": "TON_DATABASE_ID_ICI"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "isjiee-nexty-media",
+      "bucket_id": "TON_BUCKET_ID_ICI"
+    }
+  ]
 }
