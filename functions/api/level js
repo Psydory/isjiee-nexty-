@@ -1,0 +1,276 @@
+// =========================
+// functions/modules/level.js
+// SYSTÈME DE NIVEAUX BAR - VERSION FINALE CORRIGÉE
+// =========================
+
+import { ok, badRequest, unauthorized, withErrorHandler } from "../core/errorHandler.js";
+
+// =========================
+// CONFIGURATION DES NIVEAUX
+// =========================
+const LEVELS = [
+  { name: "Green Star", points: 0, icon: "🌟", color: "#10b981" },
+  { name: "Blue Star", points: 5000, icon: "💙", color: "#3b82f6" },
+  { name: "Gold Star", points: 10000, icon: "⭐", color: "#f59e0b" },
+  { name: "Lead Star", points: 15000, icon: "✨", color: "#a855f7" },
+  { name: "Mentor", points: 20000, icon: "🎓", color: "#ec4899" },
+  { name: "Crystal Mag", points: 25000, icon: "🔮", color: "#06b6d4" }
+];
+
+// =========================
+// CALCUL DU NIVEAU (CORRIGÉ)
+// =========================
+export function calculateLevel(points) {
+  const safePoints = Math.max(0, points || 0);
+  
+  let current = LEVELS[0];
+  let next = null;
+  
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (safePoints >= LEVELS[i].points) {
+      current = LEVELS[i];
+      next = LEVELS[i + 1] || null;
+    }
+  }
+  
+  // Calcul de progression avec sécurité anti-division par zéro
+  let progress = 100;
+  let pointsToNext = 0;
+  let pointsFromPrev = 0;
+  
+  if (next) {
+    const prevPoints = current.points;
+    const nextPoints = next.points;
+    const range = nextPoints - prevPoints;
+    
+    if (range > 0) {
+      const achieved = safePoints - prevPoints;
+      progress = (achieved / range) * 100;
+      progress = Math.max(0, Math.min(100, progress));
+      pointsToNext = nextPoints - safePoints;
+      pointsFromPrev = safePoints - prevPoints;
+    }
+  }
+  
+  return {
+    currentLevel: current.name,
+    currentIcon: current.icon,
+    currentColor: current.color,
+    currentPoints: current.points,
+    nextLevel: next ? next.name : null,
+    nextIcon: next ? next.icon : null,
+    nextPoints: next ? next.points : null,
+    nextColor: next ? next.color : null,
+    progress: Math.round(progress),
+    pointsToNext: Math.max(0, pointsToNext),
+    pointsFromPrev: Math.max(0, pointsFromPrev),
+    totalPoints: safePoints,
+    isMaxLevel: !next
+  };
+}
+
+// =========================
+// OBTENIR TOUS LES NIVEAUX
+// =========================
+export function getAllLevels() {
+  return [...LEVELS];
+}
+
+// =========================
+// MASQUER EMAIL (protection vie privée)
+// =========================
+function maskEmail(email) {
+  if (!email) return 'inconnu';
+  if (email.length < 5) return '***';
+  const [local, domain] = email.split('@');
+  if (!domain) return email.substring(0, 2) + '***';
+  const maskedLocal = local.length <= 2 ? local : local.substring(0, 2) + '***';
+  return `${maskedLocal}@${domain}`;
+}
+
+// =========================
+// OBTENIR LE NIVEAU D'UN UTILISATEUR (CORRIGÉ)
+// =========================
+export const getLevelInfo = withErrorHandler(async (request, env, user) => {
+  if (!user) {
+    return unauthorized();
+  }
+  
+  // Récupérer le total des points de l'utilisateur
+  const earnings = await env.DB.prepare(`
+    SELECT SUM(amount) as total FROM earnings WHERE user_id = ?
+  `).bind(user.id).first();
+  
+  const totalPoints = earnings?.total || 0;
+  const levelInfo = calculateLevel(totalPoints);
+  
+  // Points récents (30 derniers jours)
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recentEarnings = await env.DB.prepare(`
+    SELECT SUM(amount) as total FROM earnings 
+    WHERE user_id = ? AND created_at > ?
+  `).bind(user.id, thirtyDaysAgo).first();
+  
+  // Top 3 des sources de points
+  const topSources = await env.DB.prepare(`
+    SELECT source, SUM(amount) as total
+    FROM earnings
+    WHERE user_id = ?
+    GROUP BY source
+    ORDER BY total DESC
+    LIMIT 3
+  `).bind(user.id).all();
+  
+  return ok({
+    points: totalPoints,
+    recentPoints: recentEarnings?.total || 0,
+    topSources: topSources.results || [],
+    ...levelInfo
+  });
+});
+
+// =========================
+// CLASSEMENT DES UTILISATEURS (CORRIGÉ)
+// =========================
+export const getLeaderboard = withErrorHandler(async (request, env, user) => {
+  const url = new URL(request.url);
+  const limit = Math.min(100, parseInt(url.searchParams.get("limit")) || 50);
+  const offset = Math.max(0, parseInt(url.searchParams.get("offset")) || 0);
+  const includeEmail = url.searchParams.get("includeEmail") === "true";
+  
+  // Récupérer le classement avec email masqué par défaut
+  const ranking = await env.DB.prepare(`
+    SELECT 
+      u.id,
+      u.email,
+      u.role,
+      COALESCE(SUM(e.amount), 0) as total_points,
+      COUNT(e.id) as actions_count,
+      MAX(e.created_at) as last_activity
+    FROM users u
+    LEFT JOIN earnings e ON e.user_id = u.id
+    WHERE u.role = 'student' OR u.role = 'user'
+    GROUP BY u.id
+    ORDER BY total_points DESC
+    LIMIT ? OFFSET ?
+  `).bind(limit, offset).all();
+  
+  // Ajouter le niveau et masquer les emails
+  const rankingWithLevel = (ranking.results || []).map(entry => ({
+    id: entry.id,
+    email: includeEmail ? entry.email : maskEmail(entry.email),
+    role: entry.role,
+    total_points: entry.total_points,
+    actions_count: entry.actions_count,
+    last_activity: entry.last_activity,
+    level: calculateLevel(entry.total_points)
+  }));
+  
+  // Position de l'utilisateur courant (optimisé)
+  let userRank = null;
+  if (user) {
+    const userPoints = await env.DB.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total FROM earnings WHERE user_id = ?
+    `).bind(user.id).first();
+    
+    const userRanking = await env.DB.prepare(`
+      SELECT COUNT(*) + 1 as rank FROM (
+        SELECT u.id, COALESCE(SUM(e.amount), 0) as total_points
+        FROM users u
+        LEFT JOIN earnings e ON e.user_id = u.id
+        WHERE u.role = 'student' OR u.role = 'user'
+        GROUP BY u.id
+        HAVING total_points > ?
+      )
+    `).bind(userPoints?.total || 0).first();
+    
+    userRank = userRanking?.rank || 1;
+  }
+  
+  // Total des utilisateurs
+  const total = await env.DB.prepare(`
+    SELECT COUNT(*) as total FROM users WHERE role = 'student' OR role = 'user'
+  `).first();
+  
+  return ok({
+    ranking: rankingWithLevel,
+    userRank,
+    pagination: {
+      limit,
+      offset,
+      total: total?.total || 0,
+      pages: Math.ceil((total?.total || 0) / limit)
+    }
+  });
+});
+
+// =========================
+// STATISTIQUES GLOBALES DES POINTS (admin)
+// =========================
+export const getPointsStats = withErrorHandler(async (request, env, user) => {
+  if (!user || user.role !== "admin") {
+    return unauthorized();
+  }
+  
+  const url = new URL(request.url);
+  const days = parseInt(url.searchParams.get("days")) || 30;
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  
+  // Vue d'ensemble
+  const overview = await env.DB.prepare(`
+    SELECT 
+      COUNT(DISTINCT user_id) as active_users,
+      SUM(amount) as total_points,
+      AVG(amount) as avg_points,
+      MAX(amount) as max_points,
+      MIN(amount) as min_points
+    FROM earnings
+    WHERE created_at > ?
+  `).bind(since).first();
+  
+  // Points par source
+  const pointsBySource = await env.DB.prepare(`
+    SELECT source, SUM(amount) as total, COUNT(*) as count
+    FROM earnings
+    WHERE created_at > ?
+    GROUP BY source
+    ORDER BY total DESC
+  `).bind(since).all();
+  
+  // Activité quotidienne
+  const dailyActivity = await env.DB.prepare(`
+    SELECT 
+      DATE(created_at / 1000, 'unixepoch') as day,
+      COUNT(*) as count,
+      SUM(amount) as total
+    FROM earnings
+    WHERE created_at > ?
+    GROUP BY DATE(created_at / 1000, 'unixepoch')
+    ORDER BY day DESC
+    LIMIT 30
+  `).bind(since).all();
+  
+  return ok({
+    overview: {
+      active_users: overview?.active_users || 0,
+      total_points: overview?.total_points || 0,
+      avg_points: Math.round(overview?.avg_points || 0),
+      max_points: overview?.max_points || 0,
+      period_days: days
+    },
+    bySource: pointsBySource.results || [],
+    dailyActivity: dailyActivity.results || []
+  });
+});
+
+// =========================
+// EXPORT PAR DÉFAUT
+// =========================
+export default {
+  calculateLevel,
+  getAllLevels,
+  getLevelInfo,
+  getLeaderboard,
+  getPointsStats,
+  LEVELS
+};
