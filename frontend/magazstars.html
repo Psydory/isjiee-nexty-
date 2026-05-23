@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MagazStars – ISJIEE</title>
+  <meta name="description" content="Plateforme média premium ISJIEE MagazStars – Tendances, créateurs, niveaux d'excellence et upload de contenu.">
+  <meta property="og:title" content="ISJIEE MagazStars">
+  <meta property="og:description" content="Découvrez les médias tendance, suivez les influenceurs et partagez vos créations.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isjiee-nexty.pages.dev/magazstar.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/index.html" class="logo">ISJIEE</a>
+    <button class="hamburger" aria-label="Menu" aria-expanded="false">☰</button>
+    <div class="nav-links">
+      <a href="/index.html">Accueil</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/magazstar.html" class="active">⭐ MagazStars</a>
+      <a href="/gallery.html">Galerie</a>
+    </div>
+    <div style="margin-left: auto;">
+      <button id="logout" class="btn">Déconnexion</button>
+    </div>
+  </nav>
+
+  <section class="magazstars-hub premium">
+    <h2 class="section-title">✨ MagazStars — Trending</h2>
+    <div class="media-slider premium-slider" id="mediaSlider" aria-live="polite"></div>
+    <div class="media-actions">
+      <button class="btn-primary-glow" id="viewAll">Explorer tout</button>
+    </div>
+  </section>
+
+  <section class="magazstars-hub premium">
+    <h2 class="section-title">🏆 Parcours d'excellence</h2>
+    <div class="levels-slider premium-slider" id="levelsSlider"></div>
+  </section>
+
+  <section class="magazstars-hub premium">
+    <h2 class="section-title">🌟 Influenceurs à suivre</h2>
+    <div class="influencers-slider premium-slider" id="influencersSlider"></div>
+  </section>
+
+  <section class="upload-section premium">
+    <h2 class="section-title">📤 Edit / Upload Video & Image</h2>
+    <div id="uploadWidgetContainer" class="upload-container"></div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <a href="/index.html" class="logo">ISJIEE</a>
+        <p>Plateforme éducative et entrepreneuriale nouvelle génération.</p>
+      </div>
+      <div class="footer-links">
+        <div>
+          <h4>Découvrir</h4>
+          <a href="/magazstar.html">MagazStars</a>
+          <a href="/gallery.html">Galerie</a>
+          <a href="/dashboard.html">Dashboard</a>
+        </div>
+        <div>
+          <h4>Entreprise</h4>
+          <a href="/business-free.html">Business</a>
+          <a href="/admin.html">Admin</a>
+        </div>
+        <div>
+          <h4>Légal</h4>
+          <a href="/privacy.html">Confidentialité</a>
+          <a href="/terms.html">CGU</a>
+          <a href="/legal.html">Mentions légales</a>
+        </div>
+      </div>
+    </div>
+    <div class="social-links">
+      <a href="https://wa.me/50912345678" target="_blank">💬 WhatsApp</a>
+      <a href="https://linkedin.com/company/isjiee" target="_blank">🔗 LinkedIn</a>
+      <a href="https://facebook.com/isjiee" target="_blank">📘 Facebook</a>
+      <a href="https://instagram.com/isjiee" target="_blank">📸 Instagram</a>
+      <a href="https://tiktok.com/@isjiee" target="_blank">🎵 TikTok</a>
+      <a href="https://youtube.com/@isjiee" target="_blank">▶️ YouTube</a>
+    </div>
+    <p>© 2026 ISJIEE – Tous droits réservés</p>
+  </footer>
+
+  <script type="module">
+    import { requireAuth, logout } from '/js/auth.js';
+    import { createUploadWidget } from '/js/modules/upload.js';
+    import { showToast } from '/js/ui.js';
+
+    // 1. Vérification d'authentification (page privée)
+    const isAuth = await requireAuth('/login.html');
+    if (!isAuth) return;
+
+    // 2. Déconnexion
+    const logoutBtn = document.getElementById('logout');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => logout());
+
+    // 3. Peuplement des sliders niveaux et influenceurs
+    function loadLevels() {
+      const container = document.getElementById('levelsSlider');
+      if (!container) return;
+      const levels = [
+        { name: 'G-Star', points: '0 – 5000 pts', icon: '🌟' },
+        { name: 'B-Star', points: '5000 – 10000 pts', icon: '💙' },
+        { name: 'Gold Star', points: '10000 – 15000 pts', icon: '⭐' },
+        { name: 'Lead Star', points: '15000 – 20000 pts', icon: '✨' },
+        { name: 'Mentor', points: '20000 – 25000 pts', icon: '🎓' },
+        { name: 'Crystal Class', points: '25000+ pts', icon: '🔮' }
+      ];
+      container.innerHTML = levels.map(level => `
+        <div class="level-card" data-level="${level.name}">
+          <div class="level-icon">${level.icon}</div>
+          <div class="level-name">${level.name}</div>
+          <div class="level-points">${level.points}</div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.level-card').forEach(card => {
+        card.addEventListener('click', () => {
+          window.location.href = '/dashboard.html?level=' + encodeURIComponent(card.dataset.level);
+        });
+      });
+    }
+
+    function loadInfluencers() {
+      const container = document.getElementById('influencersSlider');
+      if (!container) return;
+      const influencers = [
+        { name: 'Kayla', role: 'Fashion & Beauty', avatar: '👩‍🦱' },
+        { name: 'Alex', role: 'Digital Creator', avatar: '👨‍💻' },
+        { name: 'Mia', role: 'Lifestyle', avatar: '👩‍🎨' },
+        { name: 'Jamal', role: 'Entrepreneur', avatar: '🧔‍♂️' }
+      ];
+      container.innerHTML = influencers.map(inf => `
+        <div class="influencer-card" data-name="${inf.name}">
+          <div class="influencer-avatar">${inf.avatar}</div>
+          <div class="influencer-name">${inf.name}</div>
+          <div class="influencer-role">${inf.role}</div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.influencer-card').forEach(card => {
+        card.addEventListener('click', () => {
+          window.location.href = `/profile.html?user=${encodeURIComponent(card.dataset.name)}`;
+        });
+      });
+    }
+
+    loadLevels();
+    loadInfluencers();
+
+    // 4. Widget d'upload
+    const uploadContainer = document.getElementById('uploadWidgetContainer');
+    if (uploadContainer) {
+      createUploadWidget(uploadContainer, {
+        accept: 'image/*,video/*',
+        multiple: true,
+        maxSizeMB: 20,
+        onUploadComplete: (count) => {
+          showToast(`${count} fichier(s) uploadé(s) avec succès`, 'success');
+          // Pas besoin d'appeler loadTrending ici : magazstars.js le fera automatiquement
+          // car il recharge le slider à chaque chargement de page. Si vous voulez un rafraîchissement en direct,
+          // vous pouvez émettre un événement personnalisé.
+        }
+      });
+    }
+
+    // 5. Bouton "Explorer tout"
+    const viewAllBtn = document.getElementById('viewAll');
+    if (viewAllBtn) {
+      viewAllBtn.addEventListener('click', () => {
+        window.location.href = '/gallery.html';
+      });
+    }
+  </script>
+
+  <!-- Chargement du module principal MagazStars (après l'initialisation de l'upload, mais il s'exécute à DOMContentLoaded) -->
+  <script type="module" src="/js/magazstars.js"></script>
+</body>
+</html>
