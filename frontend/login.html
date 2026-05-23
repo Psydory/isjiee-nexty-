@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion – ISJIEE</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="logo">ISJIEE</div>
+    <div class="nav-links">
+      <a href="/index.html">Accueil</a>
+      <a href="/magazstar.html">MagazStars</a>
+      <a href="/gallery.html">Galerie</a>
+      <a href="/business-free.html">Business</a>
+    </div>
+    <div style="margin-left: auto;">
+      <a href="/register.html" class="btn-outline" style="padding:0.3rem 1rem;">Créer un compte</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="login-card">
+      <h1>🔐 Connexion</h1>
+      <p>Accédez à votre espace personnel</p>
+
+      <div id="message" class="message"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="exemple@isjiee.com">
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary full-width">Se connecter</button>
+      </form>
+
+      <div class="login-footer">
+        <p><a href="/forgot-password.html">Mot de passe oublié ?</a></p>
+        <p>Pas encore de compte ? <a href="/register.html">Inscrivez-vous gratuitement</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© ISJIEE – Programme stratégique pour entrepreneurs orientés résultats.</p>
+  </footer>
+
+  <script type="module">
+    import { login } from '/js/auth.js';
+
+    const form = document.getElementById('loginForm');
+    const messageDiv = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Réinitialiser le message
+      messageDiv.textContent = '';
+      messageDiv.className = 'message';
+
+      const result = await login(email, password, '/dashboard.html');
+      if (!result.success) {
+        messageDiv.textContent = result.error || 'Erreur lors de la connexion';
+        messageDiv.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>
