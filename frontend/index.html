@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ISJIEE – Plateforme d'accompagnement des jeunes entrepreneurs. Accédez à des formations, des opportunités business et un réseau de big sellers.">
+  <title>ISJIEE · Accueil</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation principale -->
+  <nav class="nav">
+    <div class="logo">ISJIEE</div>
+    <div class="nav-links">
+      <a href="/index.html" class="active">Accueil</a>
+      <a href="/magazstar.html">MagazStars</a>
+      <a href="/gallery.html">Galerie</a>
+      <a href="/business-free.html">Business</a>
+      <a href="/dashboard.html">Dashboard</a>
+    </div>
+    <div style="margin-left: auto;">
+      <a href="/smart-entry.html" class="btn-outline" style="padding:0.3rem 1rem;">Connexion</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero section -->
+    <section class="hero-index">
+      <div class="hero-content">
+        <h1>🚀 Construisez votre avenir entrepreneurial</h1>
+        <p>ISJIEE vous accompagne avec des outils puissants : formations, vitrine médias, réseau de big sellers et opportunités business.</p>
+        <div class="hero-buttons">
+          <a href="/smart-entry.html" class="btn-primary">Commencer gratuitement</a>
+          <a href="/business-free.html" class="btn-outline">Découvrir Business Free</a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="/images/hero-illustration.svg" alt="Entrepreneur" loading="lazy"
+             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\' viewBox=\'0 0 400 300\'%3E%3Crect width=\'400\' height=\'300\' fill=\'%230A0C15\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'20\' fill=\'%23F59E0B\' text-anchor=\'middle\' dy=\'.3em\'%3EISJIEE%3C/text%3E%3C/svg%3E'">
+      </div>
+    </section>
+
+    <!-- Sections des offres (sans ancres) -->
+    <section class="offers-grid">
+      <div class="offer-card">
+        <div class="offer-icon">📊</div>
+        <h3>Business Free</h3>
+        <p>Créez votre boutique, vendez en ligne et bénéficiez de bonus jusqu’à 30%.</p>
+        <a href="/business-free.html" class="btn-small">Explorer</a>
+      </div>
+      <div class="offer-card">
+        <div class="offer-icon">✨</div>
+        <h3>Wiggfluenceur</h3>
+        <p>Devenez influenceur dans l’univers capillaire, accédez à des formations et un réseau de big sellers.</p>
+        <a href="/business-free.html" class="btn-small">Explorer</a>
+      </div>
+      <div class="offer-card">
+        <div class="offer-icon">⭐</div>
+        <h3>MagazStars</h3>
+        <p>Vitrine de médias tendance, liker, partager, téléchargez du contenu exclusif.</p>
+        <a href="/magazstar.html" class="btn-small">Découvrir</a>
+      </div>
+      <div class="offer-card">
+        <div class="offer-icon">🎓</div>
+        <h3>Academy</h3>
+        <p>Modules académiques, quiz, timer, agenda – gagnez des points BAR et progressez.</p>
+        <a href="/dashboard.html" class="btn-small">Accéder</a>
+      </div>
+    </section>
+
+    <!-- Statistiques ou témoignage -->
+    <section class="stats-index">
+      <div class="stat-item">
+        <span class="stat-number">+47%</span>
+        <span class="stat-label">de revenus en 1 mois</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">5 000+</span>
+        <span class="stat-label">entrepreneurs actifs</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">50+</span>
+        <span class="stat-label">big sellers partenaires</span>
+      </div>
+    </section>
+
+    <!-- Appel à l'action final -->
+    <section class="cta-index">
+      <h2>Prêt à transformer votre avenir ?</h2>
+      <p>Inscrivez-vous gratuitement et accédez à tous les outils.</p>
+      <a href="/smart-entry.html" class="btn-primary btn-large">Je m’inscris</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>ISJIEE · Programme stratégique pour entrepreneurs orientés résultats.</p>
+    <div class="social-links">
+      <a href="https://wa.me/50912345678" target="_blank">💬 WhatsApp</a>
+      <a href="https://linkedin.com/company/isjiee" target="_blank">🔗 LinkedIn</a>
+      <a href="https://facebook.com/isjiee" target="_blank">📘 Facebook</a>
+      <a href="https://instagram.com/isjiee" target="_blank">📸 Instagram</a>
+      <a href="https://tiktok.com/@isjiee" target="_blank">🎵 TikTok</a>
+      <a href="https://youtube.com/@isjiee" target="_blank">▶️ YouTube</a>
+    </div>
+    <p>
+      <a href="/privacy.html">Politique de confidentialité</a> |
+      <a href="/legal.html">Mentions légales</a> |
+      <a href="/terms.html">Conditions générales</a> |
+      <a href="/configuration.html">Modalités internationales</a> |
+      <a href="/info.html">À propos</a> |
+      <a href="mailto:globalviewlivepage021@gmail.com">Contact</a>
+    </p>
+    <p>© 2026 ISJIEE – Tous droits réservés</p>
+  </footer>
+
+  <!-- Mode édition (admin) -->
+  <button id="editModeBtn">✏️ Activer édition</button>
+
+  <script type="module">
+    import { toggleEditMode, initEditableElements } from '/js/editor.js';
+    const editBtn = document.getElementById('editModeBtn');
+    if (editBtn) {
+      editBtn.addEventListener('click', toggleEditMode);
+      initEditableElements();
+    }
+  </script>
+</body>
+</html>
