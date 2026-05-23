@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISJIEE · Dashboard Étudiant</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Barre de navigation -->
+  <nav class="nav">
+    <div class="logo">ISJIEE</div>
+    <div class="nav-links">
+      <a href="/index.html">Accueil</a>
+      <a href="/dashboard.html" class="active">Dashboard</a>
+      <a href="/magazstar.html">MagazStars</a>
+      <a href="/gallery.html">Galerie</a>
+    </div>
+    <div style="margin-left: auto;">
+      <button id="logout" class="btn">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>🎓 Tableau de bord étudiant</h1>
+
+    <!-- Grille principale -->
+    <div class="dashboard-grid">
+      <!-- Profil Card -->
+      <div class="card profile-card">
+        <h2>👤 Mon profil</h2>
+        <p><strong>📧 Email :</strong> <span id="userEmail">Chargement...</span></p>
+        <p><strong>🎭 Rôle :</strong> <span id="userRole">Étudiant</span></p>
+        <p><strong>📋 Phase :</strong> <span id="userPhase">trial</span> <span id="phaseRemaining"></span></p>
+        <p><strong>🏆 Niveau :</strong> <span id="userLevel" class="level-badge">Green Star</span></p>
+        <p><strong>⭐ Points BAR :</strong> <span id="points">0</span> / 25000</p>
+        <p><strong>💰 Solde disponible :</strong> <span id="balance">0</span> $</p>
+        <div class="profile-actions">
+          <button id="renewSubscription" class="btn-outline">🔄 Renouveler abonnement</button>
+          <button id="refreshBtn" class="btn-outline">🔄 Actualiser</button>
+        </div>
+      </div>
+
+      <!-- Progression Card -->
+      <div class="card">
+        <h2>✨ Chemin lumineux</h2>
+        <div class="level-path" id="levelPath"></div>
+        <div class="progress-bar-container">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p id="nextLevelInfo" class="next-level-info">Prochain niveau : ...</p>
+      </div>
+
+      <!-- Soumission Tâche Card -->
+      <div class="card">
+        <h2>📋 Soumettre une tâche</h2>
+        <select id="taskType" class="full-width">
+          <option value="video">🎥 Regarder une vidéo</option>
+          <option value="quiz">📝 Réussir un quiz</option>
+          <option value="conference">🎙️ Participer à une conférence</option>
+          <option value="report">📄 Rédiger un rapport</option>
+          <option value="exposure">🎤 Exposition orale</option>
+          <option value="prospect">📋 Établir une liste de prospects</option>
+          <option value="campaign">📈 Lancer une campagne digitale</option>
+        </select>
+        <input type="text" id="taskDescription" placeholder="Description (lien ou texte)" class="full-width">
+        <button id="submitTaskBtn" class="btn-primary full-width">📤 Soumettre la tâche</button>
+      </div>
+    </div>
+
+    <!-- Deuxième ligne -->
+    <div class="dashboard-grid">
+      <!-- Tâches en attente -->
+      <div class="card">
+        <h2>⏳ Tâches en attente</h2>
+        <div id="tasksList">Chargement...</div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="card">
+        <h2>🧠 Quiz intelligent</h2>
+        <div id="quizContainer"><div class="loader">Chargement du quiz...</div></div>
+        <div id="quizResult" class="quiz-result"></div>
+        <button id="startQuizBtn" class="btn-outline full-width">▶️ Démarrer le quiz</button>
+      </div>
+    </div>
+
+    <!-- Défi Fourmi -->
+    <div class="card">
+      <h2>🐜 Défi Fourmi – Évalue ta progression</h2>
+      <div id="antText" class="ant-text">🐜 Prêt à relever le défi ?</div>
+      <div id="choices" class="ant-choices"></div>
+      <div id="progress" class="ant-progress"></div>
+    </div>
+
+    <!-- Chronomètre -->
+    <div class="card">
+      <h2>⏱️ Chronomètre d'activité</h2>
+      <p class="timer-description">Mesure le temps passé sur tes études. Chaque minute = 1 point BAR !</p>
+      <div class="timer-display" id="timerDisplay">00:00:00</div>
+      <div class="timer-controls">
+        <button id="startTimer" class="btn-primary">▶️ Démarrer</button>
+        <button id="pauseTimer" class="btn-outline">⏸️ Pause</button>
+        <button id="resetTimer" class="btn-outline">🔄 Réinitialiser</button>
+        <button id="convertTimer" class="btn-primary">✨ Convertir en points</button>
+      </div>
+      <p id="timerMessage" class="timer-message"></p>
+    </div>
+
+    <!-- Agenda académique -->
+    <div class="card">
+      <h2>📅 Agenda académique – Parcours 8 semaines</h2>
+      <p class="agenda-description">Valide chaque étape pour débloquer la suivante et gagner des points bonus.</p>
+      <div id="academicAgenda" class="agenda-container"></div>
+      <div id="agendaMessage" class="agenda-message"></div>
+    </div>
+
+    <!-- Projets d'entreprise -->
+    <div class="card">
+      <h2>🚀 Projets d'entreprise</h2>
+      <p class="projects-description">Créez et suivez vos projets entrepreneuriaux.</p>
+      <div id="projectsList" class="projects-list">Chargement...</div>
+      <button id="newProjectBtn" class="btn-primary full-width">➕ Nouveau projet</button>
+
+      <!-- Formulaire de création de projet (caché) -->
+      <div id="projectForm" class="project-form" style="display: none;">
+        <h3>Créer un projet</h3>
+        <input type="text" id="projectTitle" placeholder="Titre du projet" class="full-width">
+        <select id="projectType" class="full-width">
+          <option value="mini">Mini projet (budget ≤ 10 000$)</option>
+          <option value="muni">Muni projet (budget 10 000 – 50 000$)</option>
+          <option value="grand">Grand projet d'affaire (budget > 50 000$)</option>
+        </select>
+        <select id="budgetModel" class="full-width">
+          <option value="bootstrapping">Auto‑financement (bootstrapping)</option>
+          <option value="subvention">Subvention / Appel à projets</option>
+          <option value="investisseur">Investisseur privé</option>
+          <option value="crowdfunding">Financement participatif</option>
+        </select>
+        <textarea id="projectDesc" placeholder="Description du projet" rows="3" class="full-width"></textarea>
+        <div class="form-actions">
+          <button id="saveProjectBtn" class="btn-primary">💾 Enregistrer</button>
+          <button id="cancelProjectBtn" class="btn-outline">❌ Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© ISJIEE – Programme d'accompagnement des jeunes entrepreneurs</p>
+  </footer>
+
+  <!-- Mode édition (admin) -->
+  <button id="editModeBtn">✏️ Activer édition</button>
+
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>,
