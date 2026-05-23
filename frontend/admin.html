@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISJIEE · Administration</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Barre de navigation -->
+  <nav class="nav">
+    <div class="logo">ISJIEE</div>
+    <div class="nav-links">
+      <a href="/index.html">Accueil</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/magazstar.html">MagazStars</a>
+      <a href="/admin.html" class="active">Admin</a>
+    </div>
+    <div style="margin-left: auto;">
+      <button id="logout" class="btn">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="header">
+      <h1>🔐 Panneau d'administration</h1>
+      <p>Gestion des utilisateurs, modération des médias et statistiques globales</p>
+    </header>
+
+    <!-- Statistiques globales -->
+    <section class="section">
+      <h2>📈 Statistiques globales</h2>
+      <div id="stats" class="grid-3"><div class="loader">Chargement des statistiques...</div></div>
+    </section>
+
+    <!-- Modération des médias -->
+    <section class="section">
+      <h2>🎬 Modération des médias</h2>
+      <div id="media" class="media-slider"><div class="loader">Chargement des médias...</div></div>
+    </section>
+
+    <!-- Gestion des utilisateurs -->
+    <section class="section">
+      <h2>👥 Gestion des utilisateurs</h2>
+      <div id="users" class="media-slider"><div class="loader">Chargement des utilisateurs...</div></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© ISJIEE – Administration</p>
+  </footer>
+
+  <!-- Mode édition (admin) -->
+  <button id="editModeBtn">✏️ Activer édition</button>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>
