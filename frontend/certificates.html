@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificates</title>
+
+<link rel="stylesheet" href="../css/main.css">
+
+<style>
+.container{
+max-width:1200px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+background:#111827;
+border-radius:16px;
+padding:20px;
+margin-bottom:20px;
+}
+
+.certificate-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+gap:20px;
+}
+
+.certificate{
+background:#1f2937;
+border-radius:16px;
+padding:20px;
+border-left:5px solid #f59e0b;
+}
+
+.badge{
+display:inline-block;
+padding:5px 10px;
+border-radius:20px;
+background:#f59e0b;
+color:black;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.btn{
+display:inline-block;
+padding:10px 16px;
+background:#10b981;
+color:white;
+text-decoration:none;
+border-radius:10px;
+margin-top:10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>🎓 My Certificates</h1>
+
+<div class="card">
+
+<h2>Summary</h2>
+
+<p>
+Certificates Earned:
+<strong id="certificateCount">0</strong>
+</p>
+
+<p>
+Current Entrepreneur Class:
+<strong id="currentClass">
+Green Entrepreneur
+</strong>
+</p>
+
+</div>
+
+<div class="certificate-grid" id="certificateGrid">
+
+<div class="certificate">
+
+<div class="badge">
+Certificate
+</div>
+
+<h3>Entrepreneur Foundation</h3>
+
+<p>
+Issued:
+<span>2026-01-01</span>
+</p>
+
+<p>
+Level:
+<span>Green Entrepreneur</span>
+</p>
+
+<p>
+Certificate ID:
+<span>CERT-000001</span>
+</p>
+
+<a href="#" class="btn">
+Download PDF
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="../js/certificates.js"></script>
+
+</body>
+</html>
