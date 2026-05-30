@@ -1,179 +1,325 @@
 // =========================
 // functions/modules/earn.js
-// VERSION FINALE CORRIGÉE
+// SYSTÈME BAR - VERSION HARMONISÉE
 // =========================
 
-import { ok, badRequest, unauthorized, tooManyRequests, withErrorHandler } from "../core/errorHandler.js";
+import {
+  ok,
+  badRequest,
+  unauthorized,
+  tooManyRequests,
+  withErrorHandler
+} from "../core/errorHandler.js";
+
 import { checkRateLimitD1 } from "../core/rate-limit.js";
 
+// =========================
+// SOURCES OFFICIELLES BAR
+// =========================
+
 const EARN_RULES = {
-  referral: { amount: 5, cooldown: 3600000 },    // 1 heure
-  content: { amount: 3, cooldown: 300000 },      // 5 minutes
-  premium: { amount: 10, cooldown: 86400000 },   // 24 heures
-  daily_login: { amount: 1, cooldown: 86400000 },
-  task_complete: { amount: 2, cooldown: 60000 }
+  quiz_pass: {
+    amount: 20,
+    cooldown: 86400000
+  },
+
+  task_complete: {
+    amount: 10,
+    cooldown: 60000
+  },
+
+  project_complete: {
+    amount: 30,
+    cooldown: 300000
+  },
+
+  referral: {
+    amount: 25,
+    cooldown: 3600000
+  },
+
+  certificate_reward: {
+    amount: 50,
+    cooldown: 86400000
+  },
+
+  daily_login: {
+    amount: 1,
+    cooldown: 86400000
+  }
 };
 
-const MAX_DAILY_EARNINGS = 100;
+const MAX_DAILY_POINTS = 500;
 
 // =========================
-// VÉRIFIER COOLDOWN AVEC D1
+// COOLDOWN
 // =========================
-async function checkCooldown(env, userId, source, cooldownMs) {
-  const windowStart = Date.now() - cooldownMs;
-  const lastAction = await env.DB.prepare(`
-    SELECT created_at FROM earnings 
-    WHERE user_id = ? AND source = ? AND created_at > ?
-    ORDER BY created_at DESC LIMIT 1
-  `).bind(userId, source, windowStart).first();
-  return !lastAction;
+
+async function checkCooldown(env, userId, source, cooldown) {
+
+  const since = Date.now() - cooldown;
+
+  const existing = await env.DB.prepare(`
+    SELECT id
+    FROM earnings
+    WHERE user_id = ?
+      AND source = ?
+      AND created_at > ?
+    LIMIT 1
+  `)
+  .bind(userId, source, since)
+  .first();
+
+  return !existing;
 }
 
 // =========================
-// AJOUTER UN GAIN (AVEC TRANSACTION)
+// AJOUT GAIN
 // =========================
-async function addEarning(env, userId, source, amount) {
-  if (amount <= 0) throw new Error("Amount must be positive");
-  
+
+async function addEarning(
+  env,
+  userId,
+  source,
+  amount,
+  meta = null
+) {
+
   const now = Date.now();
-  
-  await env.DB.prepare("BEGIN TRANSACTION").run();
-  try {
-    await env.DB.prepare(`
-      INSERT INTO earnings (user_id, source, amount, created_at)
-      VALUES (?, ?, ?, ?)
-    `).bind(userId, source, amount, now).run();
-    
-    await env.DB.prepare(`
-      UPDATE users SET balance = balance + ? WHERE id = ?
-    `).bind(amount, userId).run();
-    
-    await env.DB.prepare("COMMIT").run();
-  } catch (err) {
-    await env.DB.prepare("ROLLBACK").run();
-    throw err;
-  }
-  
-  return { userId, source, amount, createdAt: now };
+
+  await env.DB.prepare(`
+    INSERT INTO earnings (
+      user_id,
+      source,
+      amount,
+      meta,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  .bind(
+    userId,
+    source,
+    amount,
+    meta ? JSON.stringify(meta) : null,
+    now
+  )
+  .run();
+
+  await env.DB.prepare(`
+    UPDATE users
+    SET balance = COALESCE(balance,0) + ?
+    WHERE id = ?
+  `)
+  .bind(amount, userId)
+  .run();
+
+  return {
+    source,
+    amount,
+    created_at: now
+  };
 }
 
 // =========================
-// OBTENIR LES GAINS (champs limités)
+// EARN POINTS
 // =========================
-export const getUserEarnings = withErrorHandler(async (request, env, user) => {
-  if (!user) return unauthorized();
-  
-  const url = new URL(request.url);
-  const limit = Math.min(100, parseInt(url.searchParams.get("limit")) || 50);
-  const offset = Math.max(0, parseInt(url.searchParams.get("offset")) || 0);
-  
-  const earnings = await env.DB.prepare(`
-    SELECT id, source, amount, created_at FROM earnings 
-    WHERE user_id = ? 
-    ORDER BY created_at DESC 
-    LIMIT ? OFFSET ?
-  `).bind(user.id, limit, offset).all();
-  
-  const total = await env.DB.prepare(`
-    SELECT COUNT(*) as total FROM earnings WHERE user_id = ?
-  `).bind(user.id).first();
-  
-  return ok({
-    earnings: earnings.results || [],
-    pagination: { limit, offset, total: total?.total || 0 }
-  });
-});
 
-// =========================
-// OBTENIR LE SOLDE
-// =========================
-export const getUserBalance = withErrorHandler(async (request, env, user) => {
-  if (!user) return unauthorized();
-  
-  const balance = await env.DB.prepare(`
-    SELECT balance FROM users WHERE id = ?
-  `).bind(user.id).first();
-  
-  return ok({ balance: balance?.balance || 0 });
-});
+export const earn = withErrorHandler(async (
+  request,
+  env,
+  user
+) => {
 
-// =========================
-// GÉNÉRER UN GAIN
-// =========================
-export const earn = withErrorHandler(async (request, env, user) => {
-  if (!user) return unauthorized();
-  
-  const { source } = await request.json();
-  
+  if (!user) {
+    return unauthorized();
+  }
+
+  const body = await request.json();
+
+  const source = body?.source;
+
   if (!source || !EARN_RULES[source]) {
-    return badRequest("Invalid earn source");
+    return badRequest("Invalid source");
   }
-  
+
   const rule = EARN_RULES[source];
-  
-  // Rate limiting global
-  const ip = request.headers.get("cf-connecting-ip") || "unknown";
-  const rateKey = `earn:${ip}:${user.id}`;
-  const rateAllowed = await checkRateLimitD1(env, rateKey, 20, 60000);
-  if (!rateAllowed.allowed) return tooManyRequests();
-  
-  // Vérifier cooldown
-  const cooldownOk = await checkCooldown(env, user.id, source, rule.cooldown);
+
+  const ip =
+    request.headers.get("cf-connecting-ip")
+    || "unknown";
+
+  const rate = await checkRateLimitD1(
+    env,
+    `earn:${user.id}:${ip}`,
+    20,
+    60000
+  );
+
+  if (!rate.allowed) {
+    return tooManyRequests();
+  }
+
+  const cooldownOk = await checkCooldown(
+    env,
+    user.id,
+    source,
+    rule.cooldown
+  );
+
   if (!cooldownOk) {
-    return badRequest(`You can earn from ${source} only once every ${rule.cooldown / 1000} seconds`);
+    return badRequest(
+      "Cooldown active for this reward"
+    );
   }
-  
-  // Vérifier limite quotidienne globale
-  const todayStart = new Date().setHours(0, 0, 0, 0);
-  const dailyTotal = await env.DB.prepare(`
-    SELECT SUM(amount) as total FROM earnings 
-    WHERE user_id = ? AND created_at > ?
-  `).bind(user.id, todayStart).first();
-  
-  if ((dailyTotal?.total || 0) + rule.amount > MAX_DAILY_EARNINGS) {
-    return badRequest(`Daily earning limit reached (max ${MAX_DAILY_EARNINGS} points per day)`);
+
+  const today = new Date()
+    .setHours(0, 0, 0, 0);
+
+  const daily = await env.DB.prepare(`
+    SELECT COALESCE(SUM(amount),0) AS total
+    FROM earnings
+    WHERE user_id = ?
+    AND created_at >= ?
+  `)
+  .bind(user.id, today)
+  .first();
+
+  const currentDaily =
+    daily?.total || 0;
+
+  if (
+    currentDaily + rule.amount >
+    MAX_DAILY_POINTS
+  ) {
+    return badRequest(
+      "Daily limit reached"
+    );
   }
-  
-  // Ajouter le gain
-  const transaction = await addEarning(env, user.id, source, rule.amount);
-  
-  console.log(`[EARN] User ${user.id} earned ${rule.amount} from ${source}`);
-  
+
+  const transaction =
+    await addEarning(
+      env,
+      user.id,
+      source,
+      rule.amount
+    );
+
   return ok({
     success: true,
-    message: `You earned ${rule.amount} points!`,
-    transaction: {
-      source: transaction.source,
-      amount: transaction.amount,
-      created_at: transaction.createdAt
-    }
+    points: transaction.amount,
+    source: transaction.source,
+    created_at: transaction.created_at
   });
 });
 
 // =========================
-// STATS ADMIN (avec pagination)
+// HISTORIQUE
 // =========================
-export const getEarningsStats = withErrorHandler(async (request, env, user) => {
-  if (!user || user.role !== "admin") return unauthorized();
-  
-  const url = new URL(request.url);
-  const limit = Math.min(100, parseInt(url.searchParams.get("limit")) || 50);
-  const offset = Math.max(0, parseInt(url.searchParams.get("offset")) || 0);
-  
-  const stats = await env.DB.prepare(`
-    SELECT source, COUNT(*) as count, SUM(amount) as total
-    FROM earnings
-    GROUP BY source
-    LIMIT ? OFFSET ?
-  `).bind(limit, offset).all();
-  
-  const totalEarned = await env.DB.prepare(`
-    SELECT SUM(amount) as total FROM earnings
-  `).first();
-  
+
+export const getUserEarnings =
+withErrorHandler(async (
+  request,
+  env,
+  user
+) => {
+
+  if (!user) {
+    return unauthorized();
+  }
+
+  const rows =
+    await env.DB.prepare(`
+      SELECT
+        id,
+        source,
+        amount,
+        meta,
+        created_at
+      FROM earnings
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 100
+    `)
+    .bind(user.id)
+    .all();
+
   return ok({
-    stats: stats.results || [],
-    totalEarned: totalEarned?.total || 0,
-    pagination: { limit, offset }
+    earnings: rows.results || []
+  });
+});
+
+// =========================
+// SOLDE
+// =========================
+
+export const getUserBalance =
+withErrorHandler(async (
+  request,
+  env,
+  user
+) => {
+
+  if (!user) {
+    return unauthorized();
+  }
+
+  const balance =
+    await env.DB.prepare(`
+      SELECT balance
+      FROM users
+      WHERE id = ?
+    `)
+    .bind(user.id)
+    .first();
+
+  return ok({
+    balance:
+      balance?.balance || 0
+  });
+});
+
+// =========================
+// ADMIN STATS
+// =========================
+
+export const getEarningsStats =
+withErrorHandler(async (
+  request,
+  env,
+  user
+) => {
+
+  if (
+    !user ||
+    user.role !== "admin"
+  ) {
+    return unauthorized();
+  }
+
+  const stats =
+    await env.DB.prepare(`
+      SELECT
+        source,
+        COUNT(*) AS count,
+        SUM(amount) AS total
+      FROM earnings
+      GROUP BY source
+      ORDER BY total DESC
+    `)
+    .all();
+
+  const overview =
+    await env.DB.prepare(`
+      SELECT
+        COUNT(*) AS transactions,
+        SUM(amount) AS total_points
+      FROM earnings
+    `)
+    .first();
+
+  return ok({
+    overview,
+    stats: stats.results || []
   });
 });
