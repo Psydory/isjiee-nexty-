@@ -1,0 +1,247 @@
+// =========================
+// functions/modules/level.js
+// BAR ENTREPRENEUR SYSTEM – VERSION FINALE UNIFIÉE
+// =========================
+
+import { ok, unauthorized, withErrorHandler } from "../core/errorHandler.js";
+
+// =========================
+// CONFIGURATION DES NIVEAUX
+// =========================
+export const LEVELS = [
+  { name: "Green", points: 0, icon: "🟢", color: "#22c55e" },
+  { name: "Silver", points: 5000, icon: "⚪", color: "#94a3b8" },
+  { name: "Gold", points: 10000, icon: "🟡", color: "#facc15" },
+  { name: "Crystal", points: 25000, icon: "💎", color: "#06b6d4" },
+  { name: "Legend", points: 50000, icon: "👑", color: "#a855f7" }
+];
+
+// =========================
+// CALCUL DU NIVEAU
+// =========================
+export function calculateLevel(points = 0) {
+  const safePoints = Math.max(0, Number(points) || 0);
+  let current = LEVELS[0];
+  let next = null;
+
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (safePoints >= LEVELS[i].points) {
+      current = LEVELS[i];
+      next = LEVELS[i + 1] || null;
+    }
+  }
+
+  let progress = 100;
+  let pointsToNext = 0;
+
+  if (next) {
+    const range = next.points - current.points;
+    if (range > 0) {
+      progress = ((safePoints - current.points) / range) * 100;
+      progress = Math.max(0, Math.min(100, Math.round(progress)));
+      pointsToNext = next.points - safePoints;
+    }
+  }
+
+  return {
+    currentLevel: current.name,
+    currentIcon: current.icon,
+    currentColor: current.color,
+    totalPoints: safePoints,
+    nextLevel: next?.name || null,
+    nextPoints: next?.points || null,
+    nextIcon: next?.icon || null,
+    progress,
+    pointsToNext: Math.max(0, pointsToNext),
+    isMaxLevel: !next
+  };
+}
+
+// =========================
+// OBTENIR TOUS LES NIVEAUX
+// =========================
+export function getAllLevels() {
+  return [...LEVELS];
+}
+
+// =========================
+// MASQUER EMAIL
+// =========================
+function maskEmail(email) {
+  if (!email) return "hidden";
+  const [name, domain] = email.split("@");
+  if (!domain) return "hidden";
+  if (name.length <= 2) return `${name[0]}***@${domain}`;
+  return `${name.slice(0, 2)}***@${domain}`;
+}
+
+// =========================
+// LEVEL INFO (utilisateur connecté)
+// =========================
+export const getLevelInfo = withErrorHandler(async (request, env, user) => {
+  if (!user) return unauthorized();
+
+  const userData = await env.DB.prepare(`
+    SELECT id, role, level, points, balance, certified, created_at
+    FROM users WHERE id = ?
+  `).bind(user.id).first();
+
+  if (!userData) return unauthorized("User not found");
+
+  const levelInfo = calculateLevel(userData.points || 0);
+  const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+  const recentPoints = await env.DB.prepare(`
+    SELECT COALESCE(SUM(amount),0) as total
+    FROM earnings WHERE user_id = ? AND created_at > ?
+  `).bind(user.id, thirtyDaysAgo).first();
+
+  const topSources = await env.DB.prepare(`
+    SELECT source, SUM(amount) as total
+    FROM earnings WHERE user_id = ?
+    GROUP BY source ORDER BY total DESC LIMIT 5
+  `).bind(user.id).all();
+
+  return ok({
+    user: {
+      id: userData.id,
+      role: userData.role,
+      level: userData.level,
+      certified: userData.certified,
+      balance: userData.balance,
+      points: userData.points
+    },
+    recentPoints: recentPoints?.total || 0,
+    topSources: topSources.results || [],
+    ...levelInfo
+  });
+});
+
+// =========================
+// LEADERBOARD (public, avec email masqué)
+// =========================
+export const getLeaderboard = withErrorHandler(async (request, env, user) => {
+  const url = new URL(request.url);
+  const limit = Math.min(100, parseInt(url.searchParams.get("limit")) || 50);
+  const offset = Math.max(0, parseInt(url.searchParams.get("offset")) || 0);
+
+  const ranking = await env.DB.prepare(`
+    SELECT id, email, role, level, points, certified, created_at
+    FROM users
+    WHERE role IN ('student', 'entrepreneur')
+    ORDER BY points DESC
+    LIMIT ? OFFSET ?
+  `).bind(limit, offset).all();
+
+  const leaderboard = (ranking.results || []).map((entry, index) => ({
+    rank: offset + index + 1,
+    id: entry.id,
+    email: maskEmail(entry.email),
+    role: entry.role,
+    level: entry.level,
+    points: entry.points,
+    certified: entry.certified,
+    created_at: entry.created_at,
+    levelInfo: calculateLevel(entry.points)
+  }));
+
+  let userRank = null;
+  if (user) {
+    const rankData = await env.DB.prepare(`
+      SELECT COUNT(*) + 1 AS rank
+      FROM users
+      WHERE role IN ('student', 'entrepreneur') AND points > (SELECT points FROM users WHERE id = ?)
+    `).bind(user.id).first();
+    userRank = rankData?.rank || null;
+  }
+
+  const totalUsers = await env.DB.prepare(`
+    SELECT COUNT(*) as total FROM users WHERE role IN ('student', 'entrepreneur')
+  `).first();
+
+  return ok({
+    leaderboard,
+    userRank,
+    pagination: {
+      limit, offset,
+      total: totalUsers?.total || 0,
+      pages: Math.ceil((totalUsers?.total || 0) / limit)
+    }
+  });
+});
+
+// =========================
+// STATISTIQUES GLOBALES (admin only)
+// =========================
+export const getPointsStats = withErrorHandler(async (request, env, user) => {
+  if (!user || user.role !== "admin") return unauthorized();
+
+  const url = new URL(request.url);
+  const days = parseInt(url.searchParams.get("days")) || 30;
+  const since = Date.now() - (days * 24 * 60 * 60 * 1000);
+
+  const usersStats = await env.DB.prepare(`
+    SELECT
+      COUNT(*) as total_users,
+      SUM(points) as total_points,
+      AVG(points) as average_points,
+      MAX(points) as highest_points
+    FROM users
+    WHERE role IN ('student', 'entrepreneur')
+  `).first();
+
+  const levelDistribution = await env.DB.prepare(`
+    SELECT level, COUNT(*) as total FROM users GROUP BY level ORDER BY total DESC
+  `).all();
+
+  const topEntrepreneurs = await env.DB.prepare(`
+    SELECT id, email, level, points
+    FROM users WHERE role = 'entrepreneur'
+    ORDER BY points DESC LIMIT 10
+  `).all();
+
+  const earningsSources = await env.DB.prepare(`
+    SELECT source, COUNT(*) as actions, SUM(amount) as points
+    FROM earnings WHERE created_at > ?
+    GROUP BY source ORDER BY points DESC
+  `).bind(since).all();
+
+  const recentActivity = await env.DB.prepare(`
+    SELECT DATE(created_at / 1000, 'unixepoch') as day,
+           COUNT(*) as actions,
+           SUM(amount) as points
+    FROM earnings WHERE created_at > ?
+    GROUP BY day ORDER BY day DESC LIMIT 30
+  `).bind(since).all();
+
+  return ok({
+    overview: {
+      totalUsers: usersStats?.total_users || 0,
+      totalPoints: usersStats?.total_points || 0,
+      averagePoints: Math.round(usersStats?.average_points || 0),
+      highestPoints: usersStats?.highest_points || 0,
+      periodDays: days
+    },
+    levelDistribution: levelDistribution.results || [],
+    topEntrepreneurs: (topEntrepreneurs.results || []).map(u => ({
+      id: u.id,
+      email: maskEmail(u.email),
+      level: u.level,
+      points: u.points
+    })),
+    earningsSources: earningsSources.results || [],
+    recentActivity: recentActivity.results || []
+  });
+});
+
+// =========================
+// EXPORT PAR DÉFAUT
+// =========================
+export default {
+  LEVELS,
+  calculateLevel,
+  getAllLevels,
+  getLevelInfo,
+  getLeaderboard,
+  getPointsStats
+};
