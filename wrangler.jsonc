@@ -1,12 +1,15 @@
+
 {
   "name": "isjiee-nexty-app",
+  "main": "functions/api/[[path]].js",
   "compatibility_date": "2026-05-07",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "frontend",
   "vars": {
     "JWT_SECRET": "une_clé_très_longue_et_secrète_d_au_moins_32_caractères",
     "SEED_KEY": "ta_clé_seed_pour_le_peuplement",
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "R2_PUBLIC_URL": "https://pub-votre-bucket.r2.dev"
   },
   "d1_databases": [
     {
@@ -14,5 +17,15 @@
       "database_name": "isjiee-nexty-db",
       "database_id": "a4cc0032-0811-43f4-91b1-d8c5d7ded37d"
     }
-  ]
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "magazstars-media"
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "cwd": "."
+  }
 }
